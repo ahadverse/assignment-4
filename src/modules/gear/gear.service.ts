@@ -3,7 +3,7 @@ import prisma from "../../lib/prisma";
 import { NotFoundError } from "../../errors";
 import { ListGearQuery } from "./gear.validation";
 
-class GearService {
+class GearsService {
   async getAll(query: ListGearQuery) {
     const {
       category,
@@ -88,4 +88,4 @@ class GearService {
   }
 }
 
-export const gearService = new GearService();
+export const gearService = new GearsService();
