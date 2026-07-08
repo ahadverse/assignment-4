@@ -8,8 +8,7 @@ export const errorHandler = (
   err: unknown,
   _req: Request,
   res: Response,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _next: NextFunction
+  _next: NextFunction,
 ) => {
   let statusCode = 500;
   let message = 'Something went wrong';
