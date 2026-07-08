@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
-import { AppError, ErrorDetail } from '../errors';
+import { AppError, ErrorDetails } from '../errors';
 import { config } from '../config';
 
 export const errorHandler = (
@@ -13,7 +13,7 @@ export const errorHandler = (
 ) => {
   let statusCode = 500;
   let message = 'Something went wrong';
-  let errorDetails: ErrorDetail[] | null = null;
+  let errorDetails: ErrorDetails[] | null = null;
 
   if (err instanceof ZodError) {
     statusCode = 400;
