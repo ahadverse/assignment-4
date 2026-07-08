@@ -13,4 +13,7 @@ router.post(
   rentalController.create,
 );
 
+router.get("/", authenticate, rentalController.getMyOrders);
+router.get("/:id", authenticate, rentalController.getById);
+
 export default router;

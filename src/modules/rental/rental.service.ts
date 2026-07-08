@@ -1,7 +1,7 @@
-import { RentalStatus } from "@prisma/client";
+import { Prisma, RentalStatus, Role } from "@prisma/client";
 import prisma from "../../lib/prisma";
-import { BadRequestError, NotFoundError } from "../../errors";
-import { CreateRentalInput } from "./rental.validation";
+import { BadRequestError, ForbiddenError, NotFoundError } from "../../errors";
+import { CreateRentalInput, ListRentalsQuery } from "./rental.validation";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -46,6 +46,68 @@ class RentalService {
         gear: { select: { id: true, name: true, pricePerDay: true } },
       },
     });
+  }
+
+  async getCustomerOrders(customerId: string, query: ListRentalsQuery) {
+    const { status, page, limit } = query;
+
+    const where: Prisma.RentalOrderWhereInput = { customerId };
+    if (status) {
+      where.status = status;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      prisma.rentalOrder.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          gear: { select: { id: true, name: true, brand: true } },
+          payment: { select: { id: true, status: true, amount: true } },
+        },
+      }),
+      prisma.rentalOrder.count({ where }),
+    ]);
+
+    return {
+      items,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getByIdForUser(userId: string, role: Role, orderId: string) {
+    const order = await prisma.rentalOrder.findUnique({
+      where: { id: orderId },
+      include: {
+        gear: {
+          select: { id: true, name: true, brand: true, pricePerDay: true },
+        },
+        customer: { select: { id: true, fullName: true, email: true } },
+        provider: { select: { id: true, fullName: true, email: true } },
+        payment: true,
+        review: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundError("Rental order not found");
+    }
+
+    const isOwner =
+      order.customerId === userId || order.providerId === userId;
+    if (role !== Role.ADMIN && !isOwner) {
+      throw new ForbiddenError("You do not have access to this rental order");
+    }
+
+    return order;
   }
 }
 
