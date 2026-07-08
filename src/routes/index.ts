@@ -2,6 +2,7 @@ import { Router } from "express";
 import authRoutes from "../modules/auth/auth.route";
 import userRoutes from "../modules/user/user.route";
 import categoryRoutes from "../modules/category/category.route";
+import gearRoutes from "../modules/gear/gear.route";
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.get("/", (_req, res) => {
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 router.use("/categories", categoryRoutes);
+router.use("/gear", gearRoutes);
 
 export default router;
