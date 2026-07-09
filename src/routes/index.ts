@@ -8,6 +8,7 @@ import providerOrderRoutes from "../modules/provider-order/provider-order.route"
 import rentalRoutes from "../modules/rental/rental.route";
 import paymentRoutes from "../modules/payment/payment.route";
 import reviewRoutes from "../modules/review/review.route";
+import adminRoutes from "../modules/admin/admin.route";
 
 const router = Router();
 
@@ -31,5 +32,6 @@ router.use("/provider/orders", providerOrderRoutes);
 router.use("/rentals", rentalRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/reviews", reviewRoutes);
+router.use("/admin", adminRoutes);
 
 export default router;
