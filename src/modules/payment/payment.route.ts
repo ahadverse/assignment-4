@@ -13,4 +13,7 @@ router.post(
   paymentController.create,
 );
 
+router.get("/", authenticate, authorize("CUSTOMER"), paymentController.getHistory);
+router.get("/:id", authenticate, paymentController.getById);
+
 export default router;
