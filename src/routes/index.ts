@@ -7,6 +7,7 @@ import providerGearRoutes from "../modules/provider-gear/provider-gear.route";
 import providerOrderRoutes from "../modules/provider-order/provider-order.route";
 import rentalRoutes from "../modules/rental/rental.route";
 import paymentRoutes from "../modules/payment/payment.route";
+import reviewRoutes from "../modules/review/review.route";
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.use("/provider/gear", providerGearRoutes);
 router.use("/provider/orders", providerOrderRoutes);
 router.use("/rentals", rentalRoutes);
 router.use("/payments", paymentRoutes);
+router.use("/reviews", reviewRoutes);
 
 export default router;
