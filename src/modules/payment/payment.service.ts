@@ -1,5 +1,11 @@
 import Stripe from "stripe";
-import { PaymentStatus, Prisma, RentalStatus, Role } from "@prisma/client";
+import {
+  PaymentMethod,
+  PaymentStatus,
+  Prisma,
+  RentalStatus,
+  Role,
+} from "@prisma/client";
 import prisma from "../../lib/prisma";
 import stripe from "../../lib/stripe";
 import { config } from "../../config";
@@ -40,7 +46,7 @@ class PaymentService {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      payment_method_types: ["card"],
+      payment_method_types: ["card", "cashapp"],
       line_items: [
         {
           price_data: {
@@ -112,12 +118,15 @@ class PaymentService {
     role: Role,
     query: ListPaymentsQuery,
   ) {
-    const { status, page, limit } = query;
+    const { status, method, page, limit } = query;
 
     const where: Prisma.PaymentWhereInput =
       role === Role.ADMIN ? {} : { customerId };
     if (status) {
       where.status = status;
+    }
+    if (method) {
+      where.method = method;
     }
 
     const skip = (page - 1) * limit;
@@ -222,16 +231,50 @@ class PaymentService {
       return;
     }
 
+    const method = await this.resolvePaymentMethod(
+      order.payment.transactionId,
+    );
+
     await prisma.$transaction([
       prisma.payment.update({
         where: { rentalOrderId },
-        data: { status: PaymentStatus.COMPLETED, paidAt: new Date() },
+        data: { status: PaymentStatus.COMPLETED, paidAt: new Date(), method },
       }),
       prisma.rentalOrder.update({
         where: { id: rentalOrderId },
         data: { status: RentalStatus.PAID },
       }),
     ]);
+  }
+
+  private async resolvePaymentMethod(
+    transactionId: string | null,
+  ): Promise<PaymentMethod | null> {
+    if (!transactionId) {
+      return null;
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(transactionId, {
+      expand: ["payment_intent.payment_method"],
+    });
+
+    const paymentIntent = session.payment_intent;
+    const paymentMethod =
+      typeof paymentIntent === "object" && paymentIntent
+        ? paymentIntent.payment_method
+        : null;
+    const type =
+      typeof paymentMethod === "object" && paymentMethod
+        ? paymentMethod.type
+        : undefined;
+
+    if (type === "cashapp") {
+      return PaymentMethod.CASHAPP;
+    }
+    if (type === "card") {
+      return PaymentMethod.CARD;
+    }
+    return null;
   }
 }
 

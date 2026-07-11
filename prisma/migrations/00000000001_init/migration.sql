@@ -14,6 +14,9 @@ CREATE TYPE "RentalStatus" AS ENUM ('PLACED', 'CONFIRMED', 'CANCELLED', 'PAID', 
 CREATE TYPE "PaymentProvider" AS ENUM ('STRIPE', 'SSLCOMMERZ');
 
 -- CreateEnum
+CREATE TYPE "PaymentMethod" AS ENUM ('CARD', 'CASHAPP');
+
+-- CreateEnum
 CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED');
 
 -- CreateTable
@@ -89,6 +92,7 @@ CREATE TABLE "payments" (
     "amount" DECIMAL(10,2) NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'usd',
     "provider" "PaymentProvider" NOT NULL DEFAULT 'STRIPE',
+    "method" "PaymentMethod",
     "transactionId" TEXT,
     "status" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
     "paidAt" TIMESTAMP(3),

@@ -38,6 +38,11 @@ enum PaymentProvider {
   SSLCOMMERZ
 }
 
+enum PaymentMethod {
+  CARD
+  CASHAPP
+}
+
 enum PaymentStatus {
   PENDING
   COMPLETED
@@ -136,6 +141,7 @@ model Payment {
   amount        Decimal         @db.Decimal(10, 2)
   currency      String          @default("usd")
   provider      PaymentProvider @default(STRIPE)
+  method        PaymentMethod?
   transactionId String?         @unique
   status        PaymentStatus   @default(PENDING)
   paidAt        DateTime?

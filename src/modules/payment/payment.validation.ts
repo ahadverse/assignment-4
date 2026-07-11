@@ -19,6 +19,7 @@ export const confirmPaymentSchema = z.object({
 export const listPaymentsSchema = z.object({
   query: z.object({
     status: z.enum(["PENDING", "COMPLETED", "FAILED"]).optional(),
+    method: z.enum(["CARD", "CASHAPP"]).optional(),
     page: z.coerce.number().int().positive().optional().default(1),
     limit: z.coerce.number().int().positive().max(100).optional().default(10),
   }),

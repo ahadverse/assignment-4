@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import {
   Condition,
+  PaymentMethod,
   PaymentProvider,
   PaymentStatus,
   PrismaClient,
@@ -132,6 +133,7 @@ type SampleOrder = {
   payment?: {
     transactionId: string;
     status: PaymentStatus;
+    method: PaymentMethod;
     paidAt: Date;
   };
   review?: {
@@ -185,6 +187,7 @@ const sampleOrders: SampleOrder[] = [
     payment: {
       transactionId: "seed_txn_kayak_paid",
       status: PaymentStatus.COMPLETED,
+      method: PaymentMethod.CARD,
       paidAt: new Date("2026-07-04T12:00:00.000Z"),
     },
   },
@@ -199,6 +202,7 @@ const sampleOrders: SampleOrder[] = [
     payment: {
       transactionId: "seed_txn_stove_pickedup",
       status: PaymentStatus.COMPLETED,
+      method: PaymentMethod.CASHAPP,
       paidAt: new Date("2026-06-30T12:00:00.000Z"),
     },
   },
@@ -213,6 +217,7 @@ const sampleOrders: SampleOrder[] = [
     payment: {
       transactionId: "seed_txn_bike_returned",
       status: PaymentStatus.COMPLETED,
+      method: PaymentMethod.CARD,
       paidAt: new Date("2026-06-19T12:00:00.000Z"),
     },
     review: {
@@ -231,6 +236,7 @@ const sampleOrders: SampleOrder[] = [
     payment: {
       transactionId: "seed_txn_dumbbell_returned",
       status: PaymentStatus.COMPLETED,
+      method: PaymentMethod.CASHAPP,
       paidAt: new Date("2026-06-09T12:00:00.000Z"),
     },
     review: {
@@ -249,6 +255,7 @@ const sampleOrders: SampleOrder[] = [
     payment: {
       transactionId: "seed_txn_tent_returned",
       status: PaymentStatus.COMPLETED,
+      method: PaymentMethod.CARD,
       paidAt: new Date("2026-06-04T12:00:00.000Z"),
     },
     review: {
@@ -267,6 +274,7 @@ const sampleOrders: SampleOrder[] = [
     payment: {
       transactionId: "seed_txn_kayak_returned",
       status: PaymentStatus.COMPLETED,
+      method: PaymentMethod.CASHAPP,
       paidAt: new Date("2026-06-14T12:00:00.000Z"),
     },
     review: {
@@ -285,6 +293,7 @@ const sampleOrders: SampleOrder[] = [
     payment: {
       transactionId: "seed_txn_stove_returned",
       status: PaymentStatus.COMPLETED,
+      method: PaymentMethod.CARD,
       paidAt: new Date("2026-05-31T12:00:00.000Z"),
     },
     review: {
@@ -303,6 +312,7 @@ const sampleOrders: SampleOrder[] = [
     payment: {
       transactionId: "seed_txn_bike_returned_2",
       status: PaymentStatus.COMPLETED,
+      method: PaymentMethod.CASHAPP,
       paidAt: new Date("2026-06-24T12:00:00.000Z"),
     },
     review: {
@@ -441,6 +451,7 @@ async function main() {
           provider: PaymentProvider.STRIPE,
           transactionId: sample.payment.transactionId,
           status: sample.payment.status,
+          method: sample.payment.method,
           paidAt: sample.payment.paidAt,
         },
       });
