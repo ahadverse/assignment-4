@@ -8,6 +8,14 @@ export const createPaymentSchema = z.object({
   }),
 });
 
+export const confirmPaymentSchema = z.object({
+  body: z.object({
+    rentalOrderId: z
+      .string({ required_error: "Rental order is required" })
+      .min(1, "Rental order is required"),
+  }),
+});
+
 export const listPaymentsSchema = z.object({
   query: z.object({
     status: z.enum(["PENDING", "COMPLETED", "FAILED"]).optional(),
@@ -17,4 +25,5 @@ export const listPaymentsSchema = z.object({
 });
 
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>["body"];
+export type ConfirmPaymentInput = z.infer<typeof confirmPaymentSchema>["body"];
 export type ListPaymentsQuery = z.infer<typeof listPaymentsSchema>["query"];

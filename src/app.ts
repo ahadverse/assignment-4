@@ -1,3 +1,4 @@
+import path from "path";
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -34,10 +35,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (_req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    message: "Welcome to the GearUp API. Visit /api-docs for documentation.",
-    data: null,
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+});
+
+app.get("/postman", (_req: Request, res: Response) => {
+  const file = path.join(__dirname, "..", "Gear-up.postman_collection.json");
+  res.download(file, "Gear-up.postman_collection.json", (error) => {
+    if (error && !res.headersSent) {
+      res.status(404).json({
+        success: false,
+        message: "Postman collection not found",
+        data: null,
+      });
+    }
   });
 });
 

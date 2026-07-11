@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import {
   BadRequestError,
@@ -36,12 +36,17 @@ class ProviderGearService {
     });
   }
 
-  async update(providerId: string, gearId: string, input: UpdateGearInput) {
+  async update(
+    providerId: string,
+    role: Role,
+    gearId: string,
+    input: UpdateGearInput,
+  ) {
     const gear = await prisma.gearItem.findUnique({ where: { id: gearId } });
     if (!gear) {
       throw new NotFoundError("Gear not found");
     }
-    if (gear.providerId !== providerId) {
+    if (role !== Role.ADMIN && gear.providerId !== providerId) {
       throw new ForbiddenError("You can only manage your own gear");
     }
 
@@ -73,7 +78,7 @@ class ProviderGearService {
     });
   }
 
-  async remove(providerId: string, gearId: string) {
+  async remove(providerId: string, role: Role, gearId: string) {
     const gear = await prisma.gearItem.findUnique({
       where: { id: gearId },
       include: { _count: { select: { rentalOrders: true } } },
@@ -81,7 +86,7 @@ class ProviderGearService {
     if (!gear) {
       throw new NotFoundError("Gear not found");
     }
-    if (gear.providerId !== providerId) {
+    if (role !== Role.ADMIN && gear.providerId !== providerId) {
       throw new ForbiddenError("You can only manage your own gear");
     }
     if (gear._count.rentalOrders > 0) {

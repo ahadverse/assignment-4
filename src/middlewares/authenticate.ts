@@ -9,7 +9,7 @@ export const authenticate = catchAsync(
     const header = req.headers.authorization;
 
     if (!header || !header.startsWith("Bearer ")) {
-      throw new UnauthorizedError("Authentication token token is missing");
+      throw new UnauthorizedError("Authentication token is missing");
     }
 
     const token = header.split(" ")[1];

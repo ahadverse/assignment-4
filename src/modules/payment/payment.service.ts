@@ -10,7 +10,11 @@ import {
 } from "./payment.validation";
 
 class PaymentService {
-  async createCheckoutSession(customerId: string, input: CreatePaymentInput) {
+  async createCheckoutSession(
+    customerId: string,
+    role: Role,
+    input: CreatePaymentInput,
+  ) {
     const order = await prisma.rentalOrder.findUnique({
       where: { id: input.rentalOrderId },
       include: {
@@ -22,7 +26,7 @@ class PaymentService {
     if (!order) {
       throw new NotFoundError("Rental order not found");
     }
-    if (order.customerId !== customerId) {
+    if (role !== Role.ADMIN && order.customerId !== customerId) {
       throw new ForbiddenError("You can only pay for your own orders");
     }
     if (order.status !== RentalStatus.CONFIRMED) {
@@ -51,7 +55,7 @@ class PaymentService {
       cancel_url: config.stripe.cancelUrl,
       metadata: {
         rentalOrderId: order.id,
-        customerId,
+        customerId: order.customerId,
       },
     });
 
@@ -59,7 +63,7 @@ class PaymentService {
       where: { rentalOrderId: order.id },
       create: {
         rentalOrderId: order.id,
-        customerId,
+        customerId: order.customerId,
         amount,
         currency: "usd",
         transactionId: session.id,
@@ -80,17 +84,17 @@ class PaymentService {
 
   constructEvent(payload: Buffer, signature: string | undefined): Stripe.Event {
     const secret = config.stripe.webhookSecret;
-    if (secret) {
-      if (!signature) {
-        throw new BadRequestError("Missing Stripe signature");
-      }
-      try {
-        return stripe.webhooks.constructEvent(payload, signature, secret);
-      } catch (error) {
-        throw new BadRequestError("Invalid Stripe signature");
-      }
+    if (!secret) {
+      throw new BadRequestError("Webhook not configured");
     }
-    return JSON.parse(payload.toString()) as Stripe.Event;
+    if (!signature) {
+      throw new BadRequestError("Missing Stripe signature");
+    }
+    try {
+      return stripe.webhooks.constructEvent(payload, signature, secret);
+    } catch (error) {
+      throw new BadRequestError("Invalid Stripe signature");
+    }
   }
 
   async handleWebhookEvent(event: Stripe.Event) {
@@ -103,10 +107,15 @@ class PaymentService {
     }
   }
 
-  async getCustomerPayments(customerId: string, query: ListPaymentsQuery) {
+  async getCustomerPayments(
+    customerId: string,
+    role: Role,
+    query: ListPaymentsQuery,
+  ) {
     const { status, page, limit } = query;
 
-    const where: Prisma.PaymentWhereInput = { customerId };
+    const where: Prisma.PaymentWhereInput =
+      role === Role.ADMIN ? {} : { customerId };
     if (status) {
       where.status = status;
     }
@@ -143,6 +152,36 @@ class PaymentService {
     };
   }
 
+  async confirmPayment(customerId: string, role: Role, rentalOrderId: string) {
+    const payment = await prisma.payment.findUnique({
+      where: { rentalOrderId },
+    });
+
+    if (!payment) {
+      throw new NotFoundError("Payment not found");
+    }
+    if (role !== Role.ADMIN && payment.customerId !== customerId) {
+      throw new ForbiddenError("You can only confirm your own payments");
+    }
+    if (payment.status === PaymentStatus.COMPLETED) {
+      return payment;
+    }
+    if (!payment.transactionId) {
+      throw new BadRequestError("Payment not completed yet");
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(
+      payment.transactionId,
+    );
+    if (session.payment_status !== "paid") {
+      throw new BadRequestError("Payment not completed yet");
+    }
+
+    await this.markPaymentCompleted(rentalOrderId);
+
+    return prisma.payment.findUnique({ where: { rentalOrderId } });
+  }
+
   async getPaymentById(userId: string, role: Role, paymentId: string) {
     const payment = await prisma.payment.findUnique({
       where: { id: paymentId },
@@ -167,7 +206,7 @@ class PaymentService {
     return payment;
   }
 
-  private async markPaymentCompleted(rentalOrderId: string) {
+  async markPaymentCompleted(rentalOrderId: string) {
     const order = await prisma.rentalOrder.findUnique({
       where: { id: rentalOrderId },
       include: { payment: true },

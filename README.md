@@ -11,7 +11,7 @@ GearUp lets three roles interact with a rental marketplace:
 
 | Role | Can do |
 |------|--------|
-| **Customer** | Browse gear, place rental orders, pay via Stripe, track status, review returned gear |
+| **Customer** | Browse gear, place rental orders, pay via Stripe, track status, review gear once paid or returned |
 | **Provider** | Manage gear inventory and stock, view incoming orders, advance order status |
 | **Admin** | Manage users (suspend/activate), oversee all gear and rentals, manage categories |
 
@@ -80,6 +80,8 @@ The API runs at `http://localhost:5000` and docs at `http://localhost:5000/api-d
 
 Base path: `/api`
 
+> **Admin override**: `ADMIN` always passes every role check (`authorize(...)`) and every per-resource ownership check, regardless of the `Access` column below. Admin can create/manage gear, rentals, payments, and reviews on behalf of any user, and "list my own X" endpoints (`/rentals`, `/payments`, `/provider/orders`) return the platform-wide list instead of an empty one when called by an admin. Records created this way (payments, reviews) are still attributed to the resource's real owner, not the admin, so data stays consistent.
+
 ### Auth
 | Method | Endpoint | Access |
 |--------|----------|--------|
@@ -103,7 +105,7 @@ Base path: `/api`
 ### Gear (public)
 | Method | Endpoint | Access |
 |--------|----------|--------|
-| GET | `/gear` | Public (filters: category, brand, search, minPrice, maxPrice, availability) |
+| GET | `/gear` | Public (filters: category [id OR name, case-insensitive], brand, search, minPrice, maxPrice, availability) |
 | GET | `/gear/:id` | Public |
 | GET | `/gear/:id/reviews` | Public |
 
@@ -120,13 +122,14 @@ Base path: `/api`
 | Method | Endpoint | Access |
 |--------|----------|--------|
 | POST | `/rentals` | Customer |
-| GET | `/rentals` | Authenticated |
+| GET | `/rentals` | Customer |
 | GET | `/rentals/:id` | Owner / Admin |
 
 ### Payments
 | Method | Endpoint | Access |
 |--------|----------|--------|
 | POST | `/payments/create` | Customer |
+| POST | `/payments/confirm` | Customer |
 | POST | `/payments/webhook` | Stripe (raw body) |
 | GET | `/payments` | Customer |
 | GET | `/payments/:id` | Owner / Admin |
@@ -154,22 +157,25 @@ PLACED ──confirm(provider)──> CONFIRMED ──payment──> PAID ──
 
 - Stock is decremented when an order is **CONFIRMED** and restored when it is **RETURNED**.
 - An order can only be **PICKED_UP** after its payment is **COMPLETED**.
-- A review can only be left once an order is **RETURNED**, one review per order.
+- A review can only be left once an order is **PAID** or **RETURNED**, one review per order.
 
 ## Payments (Stripe)
 
 1. Customer calls `POST /payments/create` for a **CONFIRMED** order → returns a Stripe Checkout URL and a `PENDING` payment.
 2. Customer completes payment on Stripe.
-3. Stripe calls `POST /payments/webhook` → the payment is marked `COMPLETED` and the order moves to `PAID`.
+3. Either Stripe calls `POST /payments/webhook` (async, signature-verified), or the customer calls `POST /payments/confirm` (sync, checks the session status directly with Stripe) — both mark the payment `COMPLETED` and move the order to `PAID`.
 
-The webhook route reads the raw request body and verifies the Stripe signature when `STRIPE_WEBHOOK_SECRET` is set. After deploying, create a webhook in the Stripe dashboard pointing to `<your-render-url>/api/payments/webhook` and set `STRIPE_WEBHOOK_SECRET`.
+The webhook route reads the raw request body and always verifies the Stripe signature via `STRIPE_WEBHOOK_SECRET` — requests without a valid signature are rejected with 400. After deploying, create a webhook in the Stripe dashboard pointing to `<your-render-url>/api/payments/webhook` and set `STRIPE_WEBHOOK_SECRET`. For local testing without the Stripe CLI, use `POST /payments/confirm` instead of the webhook.
 
 ## Default Credentials (from seed)
 
 - **Admin:** `admin@gearup.com` / `Admin@1234`
-- **Sample provider:** `peakgear@gearup.com` / `Provider@1234`
+- **Sample providers:** `peakgear@gearup.com` / `Provider@1234`, `riverside@gearup.com` / `Provider@1234`
+- **Sample customers:** `alex.customer@gearup.com`, `jamie.customer@gearup.com`, `sam.customer@gearup.com` — all `Customer@1234`
 
 Override the admin credentials with the `ADMIN_EMAIL` / `ADMIN_PASSWORD` environment variables.
+
+The seed also creates one rental order per `RentalStatus` value (PLACED, CONFIRMED, CANCELLED, PAID, PICKED_UP, RETURNED) across the sample customers, with matching `Payment` rows for the paid ones and a `Review` on the returned order — so every table has realistic demo data out of the box, not just users/categories/gear.
 
 ## Deployment (Render)
 

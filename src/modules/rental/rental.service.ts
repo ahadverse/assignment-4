@@ -48,10 +48,15 @@ class RentalService {
     });
   }
 
-  async getCustomerOrders(customerId: string, query: ListRentalsQuery) {
+  async getCustomerOrders(
+    customerId: string,
+    role: Role,
+    query: ListRentalsQuery,
+  ) {
     const { status, page, limit } = query;
 
-    const where: Prisma.RentalOrderWhereInput = { customerId };
+    const where: Prisma.RentalOrderWhereInput =
+      role === Role.ADMIN ? {} : { customerId };
     if (status) {
       where.status = status;
     }

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GearUp API</title>
+    <style>
+      :root {
+        --bg: #0b1120;
+        --bg-soft: #111a2e;
+        --card: #151f36;
+        --border: #24304d;
+        --text: #e6ecf7;
+        --muted: #93a1bd;
+        --accent: #10b981;
+        --accent-2: #34d399;
+        --shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        color: var(--text);
+        background: radial-gradient(
+            1200px 600px at 50% -10%,
+            rgba(16, 185, 129, 0.18),
+            transparent 60%
+          ),
+          var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+      }
+
+      .wrap {
+        width: 100%;
+        max-width: 880px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--bg-soft);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent-2);
+        box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.18);
+      }
+
+      h1 {
+        margin: 22px 0 10px;
+        font-size: clamp(34px, 6vw, 52px);
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+      }
+
+      h1 span {
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .lead {
+        margin: 0 0 8px;
+        color: var(--muted);
+        font-size: 18px;
+        max-width: 560px;
+      }
+
+      .base {
+        margin-top: 18px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 14px;
+        color: var(--text);
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+        padding: 10px 14px;
+        border-radius: 10px;
+      }
+
+      .base b {
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      .cards {
+        margin-top: 34px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 22px;
+        border-radius: 16px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.18s ease, border-color 0.18s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+        border-color: var(--accent);
+      }
+
+      .icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background: rgba(16, 185, 129, 0.12);
+        color: var(--accent-2);
+      }
+
+      .card h3 {
+        margin: 0;
+        font-size: 17px;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .card .go {
+        margin-top: auto;
+        color: var(--accent-2);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      footer {
+        margin-top: 34px;
+        color: var(--muted);
+        font-size: 13px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        align-items: center;
+      }
+
+      footer .stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      footer .stack span {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 4px 10px;
+        background: var(--bg-soft);
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f8fc;
+          --bg-soft: #ffffff;
+          --card: #ffffff;
+          --border: #e2e8f0;
+          --text: #0f172a;
+          --muted: #5b6b86;
+          --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <span class="badge"><span class="dot"></span> API is running</span>
+
+      <h1><span>GearUp</span> API</h1>
+      <p class="lead">
+        Backend REST API for renting sports and outdoor gear. Browse and rent
+        equipment, manage inventory, process payments, and oversee the platform.
+      </p>
+
+      <div class="base"><b>Base URL</b> &nbsp;/api</div>
+
+      <section class="cards">
+        <a class="card" href="/api-docs">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          </div>
+          <h3>API Documentation</h3>
+          <p>Interactive Swagger UI for every endpoint, request, and response.</p>
+          <span class="go">Open docs &rarr;</span>
+        </a>
+
+        <a class="card" href="/postman">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </div>
+          <h3>Postman Collection</h3>
+          <p>Download the full collection with all routes and saved variables.</p>
+          <span class="go">Download JSON &rarr;</span>
+        </a>
+
+        <a class="card" href="/api">
+          <div class="icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
+          </div>
+          <h3>Health Check</h3>
+          <p>Server status endpoint returning a live JSON heartbeat.</p>
+          <span class="go">Check status &rarr;</span>
+        </a>
+      </section>
+
+      <footer>
+        <div class="stack">
+          <span>Node.js</span>
+          <span>Express</span>
+          <span>TypeScript</span>
+          <span>Prisma</span>
+          <span>PostgreSQL</span>
+          <span>Stripe</span>
+        </div>
+      </footer>
+    </main>
+  </body>
+</html>

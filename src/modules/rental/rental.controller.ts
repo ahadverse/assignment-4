@@ -20,13 +20,14 @@ class RentalController {
   });
 
   getMyOrders = catchAsync(async (req: Request, res: Response) => {
-    const customerId = req.user?.userId;
-    if (!customerId) {
+    const user = req.user;
+    if (!user?.userId) {
       throw new UnauthorizedError("Authentication required");
     }
     const { query } = listRentalsSchema.parse({ query: req.query });
     const { items, meta } = await rentalService.getCustomerOrders(
-      customerId,
+      user.userId,
+      user.role,
       query,
     );
     sendResponse(res, {

@@ -7,18 +7,35 @@ import { listPaymentsSchema } from "./payment.validation";
 
 class PaymentController {
   create = catchAsync(async (req: Request, res: Response) => {
-    const customerId = req.user?.userId;
-    if (!customerId) {
+    const user = req.user;
+    if (!user?.userId) {
       throw new UnauthorizedError("Authentication required");
     }
     const result = await paymentService.createCheckoutSession(
-      customerId,
+      user.userId,
+      user.role,
       req.body,
     );
     sendResponse(res, {
       statusCode: 201,
       message: "Payment session created successfully",
       data: result,
+    });
+  });
+
+  confirm = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user;
+    if (!user?.userId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+    const payment = await paymentService.confirmPayment(
+      user.userId,
+      user.role,
+      req.body.rentalOrderId,
+    );
+    sendResponse(res, {
+      message: "Payment confirmed successfully",
+      data: payment,
     });
   });
 
@@ -30,13 +47,14 @@ class PaymentController {
   });
 
   getHistory = catchAsync(async (req: Request, res: Response) => {
-    const customerId = req.user?.userId;
-    if (!customerId) {
+    const user = req.user;
+    if (!user?.userId) {
       throw new UnauthorizedError("Authentication required");
     }
     const { query } = listPaymentsSchema.parse({ query: req.query });
     const { items, meta } = await paymentService.getCustomerPayments(
-      customerId,
+      user.userId,
+      user.role,
       query,
     );
     sendResponse(res, {

@@ -7,11 +7,11 @@ import { listReviewsSchema } from "./review.validation";
 
 class ReviewController {
   create = catchAsync(async (req: Request, res: Response) => {
-    const customerId = req.user?.userId;
-    if (!customerId) {
+    const user = req.user;
+    if (!user?.userId) {
       throw new UnauthorizedError("Authentication required");
     }
-    const review = await reviewService.create(customerId, req.body);
+    const review = await reviewService.create(user.userId, user.role, req.body);
     sendResponse(res, {
       statusCode: 201,
       message: "Review submitted successfully",

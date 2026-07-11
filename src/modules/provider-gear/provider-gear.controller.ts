@@ -19,12 +19,13 @@ class ProviderGearController {
   });
 
   update = catchAsync(async (req: Request, res: Response) => {
-    const providerId = req.user?.userId;
-    if (!providerId) {
+    const user = req.user;
+    if (!user?.userId) {
       throw new UnauthorizedError("Authentication are required");
     }
     const gear = await providerGearService.update(
-      providerId,
+      user.userId,
+      user.role,
       req.params.id,
       req.body,
     );
@@ -35,11 +36,11 @@ class ProviderGearController {
   });
 
   remove = catchAsync(async (req: Request, res: Response) => {
-    const providerId = req.user?.userId;
-    if (!providerId) {
+    const user = req.user;
+    if (!user?.userId) {
       throw new UnauthorizedError("Authentication required");
     }
-    await providerGearService.remove(providerId, req.params.id);
+    await providerGearService.remove(user.userId, user.role, req.params.id);
     sendResponse(res, {
       message: "Gear removed successfully",
     });

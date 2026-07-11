@@ -1,4 +1,4 @@
-import { PaymentStatus, Prisma, RentalStatus } from "@prisma/client";
+import { PaymentStatus, Prisma, RentalStatus, Role } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../../errors";
 import {
@@ -16,10 +16,15 @@ const allowedTransitions: Record<RentalStatus, RentalStatus[]> = {
 };
 
 class ProviderOrderService {
-  async getProviderOrders(providerId: string, query: ListProviderOrdersQuery) {
+  async getProviderOrders(
+    providerId: string,
+    role: Role,
+    query: ListProviderOrdersQuery,
+  ) {
     const { status, page, limit } = query;
 
-    const where: Prisma.RentalOrderWhereInput = { providerId };
+    const where: Prisma.RentalOrderWhereInput =
+      role === Role.ADMIN ? {} : { providerId };
     if (status) {
       where.status = status;
     }
@@ -54,6 +59,7 @@ class ProviderOrderService {
 
   async updateStatus(
     providerId: string,
+    role: Role,
     orderId: string,
     input: UpdateOrderStatusInput,
   ) {
@@ -65,7 +71,7 @@ class ProviderOrderService {
     if (!order) {
       throw new NotFoundError("Rental order not found");
     }
-    if (order.providerId !== providerId) {
+    if (role !== Role.ADMIN && order.providerId !== providerId) {
       throw new ForbiddenError("You can only manage orders for your own gear");
     }
 

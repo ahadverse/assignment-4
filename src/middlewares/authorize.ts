@@ -8,9 +8,9 @@ export const authorize = (...allowedRoles: Role[]) => {
       throw new UnauthorizedError("Authentication required!!!");
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    if (req.user.role !== Role.ADMIN && !allowedRoles.includes(req.user.role)) {
       throw new ForbiddenError(
-        "You do not have parmission to access this resource",
+        "You do not have permission to access this resource",
       );
     }
 

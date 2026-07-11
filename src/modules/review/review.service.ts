@@ -1,10 +1,15 @@
-import { Prisma, RentalStatus } from "@prisma/client";
+import { Prisma, RentalStatus, Role } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../../errors";
 import { CreateReviewInput, ListReviewsQuery } from "./review.validation";
 
+const REVIEWABLE_STATUSES: RentalStatus[] = [
+  RentalStatus.PAID,
+  RentalStatus.RETURNED,
+];
+
 class ReviewService {
-  async create(customerId: string, input: CreateReviewInput) {
+  async create(customerId: string, role: Role, input: CreateReviewInput) {
     const order = await prisma.rentalOrder.findUnique({
       where: { id: input.rentalOrderId },
       include: { review: true },
@@ -13,11 +18,11 @@ class ReviewService {
     if (!order) {
       throw new NotFoundError("Rental order not found");
     }
-    if (order.customerId !== customerId) {
+    if (role !== Role.ADMIN && order.customerId !== customerId) {
       throw new ForbiddenError("You can only review your own rentals");
     }
-    if (order.status !== RentalStatus.RETURNED) {
-      throw new BadRequestError("You can only review returned rentals");
+    if (!REVIEWABLE_STATUSES.includes(order.status)) {
+      throw new BadRequestError("You can only review paid or returned rentals");
     }
     if (order.review) {
       throw new BadRequestError("You have already reviewed this rental");
@@ -26,7 +31,7 @@ class ReviewService {
     return prisma.review.create({
       data: {
         gearId: order.gearId,
-        customerId,
+        customerId: order.customerId,
         rentalOrderId: order.id,
         rating: input.rating,
         reviewText: input.reviewText,

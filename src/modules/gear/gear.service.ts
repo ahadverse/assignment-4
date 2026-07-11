@@ -19,7 +19,12 @@ class GearsService {
     const where: Prisma.GearItemWhereInput = {};
 
     if (category) {
-      where.categoryId = category;
+      where.category = {
+        OR: [
+          { id: category },
+          { name: { equals: category, mode: "insensitive" } },
+        ],
+      };
     }
     if (brand) {
       where.brand = { contains: brand, mode: "insensitive" };

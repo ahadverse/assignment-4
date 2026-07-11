@@ -7,13 +7,14 @@ import { listProviderOrdersSchema } from "./provider-order.validation";
 
 class ProviderOrderController {
   getOrders = catchAsync(async (req: Request, res: Response) => {
-    const providerId = req.user?.userId;
-    if (!providerId) {
+    const user = req.user;
+    if (!user?.userId) {
       throw new UnauthorizedError("Authentications is required");
     }
     const { query } = listProviderOrdersSchema.parse({ query: req.query });
     const { items, meta } = await providerOrderService.getProviderOrders(
-      providerId,
+      user.userId,
+      user.role,
       query,
     );
     sendResponse(res, {
@@ -24,12 +25,13 @@ class ProviderOrderController {
   });
 
   updateStatus = catchAsync(async (req: Request, res: Response) => {
-    const providerId = req.user?.userId;
-    if (!providerId) {
+    const user = req.user;
+    if (!user?.userId) {
       throw new UnauthorizedError("Authentication is required");
     }
     const order = await providerOrderService.updateStatus(
-      providerId,
+      user.userId,
+      user.role,
       req.params.id,
       req.body,
     );

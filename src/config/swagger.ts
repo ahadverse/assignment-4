@@ -251,7 +251,12 @@ const definition = {
         summary: "Browse gear with filters",
         security: [],
         parameters: [
-          { in: "query", name: "category", schema: { type: "string" } },
+          {
+            in: "query",
+            name: "category",
+            description: "Category id OR category name (case-insensitive)",
+            schema: { type: "string" },
+          },
           { in: "query", name: "brand", schema: { type: "string" } },
           { in: "query", name: "search", schema: { type: "string" } },
           { in: "query", name: "minPrice", schema: { type: "number" } },
@@ -411,6 +416,24 @@ const definition = {
         responses: { "201": { description: "Checkout session created" } },
       },
     },
+    "/payments/confirm": {
+      post: {
+        tags: ["Payments"],
+        summary: "Confirm/verify a payment (customer)",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/PaymentInput" },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Payment confirmed" },
+          "400": { description: "Payment not completed yet" },
+        },
+      },
+    },
     "/payments/webhook": {
       post: {
         tags: ["Payments"],
@@ -442,7 +465,7 @@ const definition = {
     "/reviews": {
       post: {
         tags: ["Reviews"],
-        summary: "Create a review after return (customer)",
+        summary: "Create a review once paid or returned (customer)",
         requestBody: {
           required: true,
           content: {
@@ -453,7 +476,7 @@ const definition = {
         },
         responses: {
           "201": { description: "Review submitted" },
-          "400": { description: "Order not returned or already reviewed" },
+          "400": { description: "Order not paid/returned or already reviewed" },
         },
       },
     },
