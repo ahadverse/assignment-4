@@ -52,6 +52,22 @@ class RentalController {
       data: order,
     });
   });
+
+  cancel = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user;
+    if (!user?.userId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+    const order = await rentalService.cancelOwnOrder(
+      user.userId,
+      user.role,
+      req.params.id,
+    );
+    sendResponse(res, {
+      message: "Rental order cancelled successfully",
+      data: order,
+    });
+  });
 }
 
 export const rentalController = new RentalController();

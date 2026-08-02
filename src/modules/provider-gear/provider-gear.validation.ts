@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+export const listProviderGearSchema = z.object({
+  query: z.object({
+    search: z.string().optional(),
+    category: z.string().optional(),
+    availability: z.enum(["true", "false"]).optional(),
+    page: z.coerce.number().int().positive().optional().default(1),
+    limit: z.coerce.number().int().positive().max(100).optional().default(10),
+  }),
+});
+
 export const createGearSchema = z.object({
   body: z.object({
     categoryId: z
@@ -48,5 +58,8 @@ export const updateGearSchema = z.object({
   }),
 });
 
+export type ListProviderGearQuery = z.infer<
+  typeof listProviderGearSchema
+>["query"];
 export type CreateGearInput = z.infer<typeof createGearSchema>["body"];
 export type UpdateGearInput = z.infer<typeof updateGearSchema>["body"];

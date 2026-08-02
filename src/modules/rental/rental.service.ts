@@ -1,5 +1,6 @@
-import { Prisma, RentalStatus, Role } from "@prisma/client";
+import { PaymentStatus, Prisma, RentalStatus, Role } from "@prisma/client";
 import prisma from "../../lib/prisma";
+import stripe from "../../lib/stripe";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../../errors";
 import { CreateRentalInput, ListRentalsQuery } from "./rental.validation";
 
@@ -70,8 +71,18 @@ class RentalService {
         take: limit,
         orderBy: { createdAt: "desc" },
         include: {
-          gear: { select: { id: true, name: true, brand: true } },
+          gear: {
+            select: {
+              id: true,
+              name: true,
+              brand: true,
+              images: true,
+              pricePerDay: true,
+            },
+          },
+          provider: { select: { id: true, fullName: true } },
           payment: { select: { id: true, status: true, amount: true } },
+          review: { select: { id: true, rating: true } },
         },
       }),
       prisma.rentalOrder.count({ where }),
@@ -93,7 +104,13 @@ class RentalService {
       where: { id: orderId },
       include: {
         gear: {
-          select: { id: true, name: true, brand: true, pricePerDay: true },
+          select: {
+            id: true,
+            name: true,
+            brand: true,
+            images: true,
+            pricePerDay: true,
+          },
         },
         customer: { select: { id: true, fullName: true, email: true } },
         provider: { select: { id: true, fullName: true, email: true } },
@@ -113,6 +130,66 @@ class RentalService {
     }
 
     return order;
+  }
+
+  async cancelOwnOrder(customerId: string, role: Role, orderId: string) {
+    const order = await prisma.rentalOrder.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!order) {
+      throw new NotFoundError("Rental order not found");
+    }
+    if (role !== Role.ADMIN && order.customerId !== customerId) {
+      throw new ForbiddenError("You can only cancel your own rental orders");
+    }
+    if (order.status !== RentalStatus.PLACED) {
+      throw new BadRequestError(
+        "Only orders that are still placed can be cancelled",
+      );
+    }
+
+    await this.closeOpenCheckout(orderId);
+
+    return prisma.rentalOrder.update({
+      where: { id: orderId },
+      data: { status: RentalStatus.CANCELLED },
+      include: {
+        gear: { select: { id: true, name: true, brand: true } },
+      },
+    });
+  }
+
+  private async closeOpenCheckout(orderId: string) {
+    const payment = await prisma.payment.findUnique({
+      where: { rentalOrderId: orderId },
+    });
+
+    if (
+      !payment?.transactionId ||
+      payment.status !== PaymentStatus.PENDING
+    ) {
+      return;
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(
+      payment.transactionId,
+    );
+
+    if (session.payment_status === "paid") {
+      throw new BadRequestError(
+        "This booking has already been paid and can no longer be cancelled",
+      );
+    }
+
+    if (session.status === "open") {
+      await stripe.checkout.sessions.expire(payment.transactionId);
+    }
+
+    await prisma.payment.update({
+      where: { rentalOrderId: orderId },
+      data: { status: PaymentStatus.FAILED },
+    });
   }
 }
 

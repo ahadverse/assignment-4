@@ -3,8 +3,27 @@ import { catchAsync } from "../../utils/catch-async";
 import { sendResponse } from "../../utils/send-response";
 import { UnauthorizedError } from "../../errors";
 import { providerGearService } from "./provider-gear.service";
+import { listProviderGearSchema } from "./provider-gear.validation";
 
 class ProviderGearController {
+  getMyGear = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user;
+    if (!user?.userId) {
+      throw new UnauthorizedError("Authentication required");
+    }
+    const { query } = listProviderGearSchema.parse({ query: req.query });
+    const { items, meta } = await providerGearService.getMyGear(
+      user.userId,
+      user.role,
+      query,
+    );
+    sendResponse(res, {
+      message: "Gear retrieved successfully",
+      meta,
+      data: items,
+    });
+  });
+
   create = catchAsync(async (req: Request, res: Response) => {
     const providerId = req.user?.userId;
     if (!providerId) {

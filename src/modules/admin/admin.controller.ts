@@ -9,6 +9,14 @@ import {
 } from "./admin.validation";
 
 class AdminController {
+  getStats = catchAsync(async (_req: Request, res: Response) => {
+    const stats = await adminService.getStats();
+    sendResponse(res, {
+      message: "Platform statistics retrieved successfully",
+      data: stats,
+    });
+  });
+
   getUsers = catchAsync(async (req: Request, res: Response) => {
     const { query } = listUsersSchema.parse({ query: req.query });
     const { items, meta } = await adminService.getUsers(query);

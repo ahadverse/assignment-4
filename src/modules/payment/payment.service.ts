@@ -15,6 +15,11 @@ import {
   ListPaymentsQuery,
 } from "./payment.validation";
 
+const PAYABLE_STATUSES: RentalStatus[] = [
+  RentalStatus.PLACED,
+  RentalStatus.CONFIRMED,
+];
+
 class PaymentService {
   async createCheckoutSession(
     customerId: string,
@@ -35,8 +40,10 @@ class PaymentService {
     if (role !== Role.ADMIN && order.customerId !== customerId) {
       throw new ForbiddenError("You can only pay for your own orders");
     }
-    if (order.status !== RentalStatus.CONFIRMED) {
-      throw new BadRequestError("Only confirmed orders can be paid");
+    if (!PAYABLE_STATUSES.includes(order.status)) {
+      throw new BadRequestError(
+        "Only placed or confirmed orders can be paid",
+      );
     }
     if (order.payment && order.payment.status === PaymentStatus.COMPLETED) {
       throw new BadRequestError("This order has already been paid");
@@ -57,8 +64,13 @@ class PaymentService {
           quantity: 1,
         },
       ],
-      success_url: config.stripe.successUrl,
-      cancel_url: config.stripe.cancelUrl,
+      success_url: this.withParams(config.stripe.successUrl, {
+        session_id: "{CHECKOUT_SESSION_ID}",
+        orderId: order.id,
+      }),
+      cancel_url: this.withParams(config.stripe.cancelUrl, {
+        orderId: order.id,
+      }),
       metadata: {
         rentalOrderId: order.id,
         customerId: order.customerId,
@@ -86,6 +98,19 @@ class PaymentService {
       paymentId: payment.id,
       checkoutUrl: session.url,
     };
+  }
+
+  private withParams(baseUrl: string, params: Record<string, string>) {
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    const query = Object.entries(params)
+      .map(([key, value]) =>
+        value.startsWith("{") && value.endsWith("}")
+          ? `${key}=${value}`
+          : `${key}=${encodeURIComponent(value)}`,
+      )
+      .join("&");
+
+    return `${baseUrl}${separator}${query}`;
   }
 
   constructEvent(payload: Buffer, signature: string | undefined): Stripe.Event {
@@ -227,7 +252,7 @@ class PaymentService {
     if (order.payment.status === PaymentStatus.COMPLETED) {
       return;
     }
-    if (order.status !== RentalStatus.CONFIRMED) {
+    if (!PAYABLE_STATUSES.includes(order.status)) {
       return;
     }
 

@@ -4,6 +4,7 @@ export const listUsersSchema = z.object({
   query: z.object({
     role: z.enum(["CUSTOMER", "PROVIDER", "ADMIN"]).optional(),
     status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
+    search: z.string().optional(),
     page: z.coerce.number().int().positive().optional().default(1),
     limit: z.coerce.number().int().positive().max(100).optional().default(10),
   }),
@@ -19,6 +20,7 @@ export const updateUserStatusSchema = z.object({
 
 export const listGearSchema = z.object({
   query: z.object({
+    search: z.string().optional(),
     page: z.coerce.number().int().positive().optional().default(1),
     limit: z.coerce.number().int().positive().max(100).optional().default(10),
   }),
@@ -36,6 +38,7 @@ export const listRentalsSchema = z.object({
         "RETURNED",
       ])
       .optional(),
+    search: z.string().optional(),
     page: z.coerce.number().int().positive().optional().default(1),
     limit: z.coerce.number().int().positive().max(100).optional().default(10),
   }),

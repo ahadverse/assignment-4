@@ -16,4 +16,11 @@ router.post(
 router.get("/", authenticate, authorize("CUSTOMER"), rentalController.getMyOrders);
 router.get("/:id", authenticate, rentalController.getById);
 
+router.patch(
+  "/:id/cancel",
+  authenticate,
+  authorize("CUSTOMER"),
+  rentalController.cancel,
+);
+
 export default router;

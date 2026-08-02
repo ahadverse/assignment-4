@@ -5,6 +5,13 @@ import { createGearSchema, updateGearSchema } from "./provider-gear.validation";
 
 const router = Router();
 
+router.get(
+  "/",
+  authenticate,
+  authorize("PROVIDER"),
+  providerGearController.getMyGear,
+);
+
 router.post(
   "/",
   authenticate,
