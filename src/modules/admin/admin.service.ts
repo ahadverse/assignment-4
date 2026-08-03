@@ -206,7 +206,9 @@ class AdminService {
         take: limit,
         orderBy: { createdAt: "desc" },
         include: {
-          gear: { select: { id: true, name: true, brand: true } },
+          gear: {
+            select: { id: true, name: true, brand: true, images: true },
+          },
           customer: { select: { id: true, fullName: true, email: true } },
           provider: { select: { id: true, fullName: true, email: true } },
           payment: { select: { id: true, status: true, amount: true } },

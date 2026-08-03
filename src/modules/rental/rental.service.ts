@@ -44,7 +44,15 @@ class RentalService {
         status: RentalStatus.PLACED,
       },
       include: {
-        gear: { select: { id: true, name: true, pricePerDay: true } },
+        gear: {
+          select: {
+            id: true,
+            name: true,
+            brand: true,
+            images: true,
+            pricePerDay: true,
+          },
+        },
       },
     });
   }
